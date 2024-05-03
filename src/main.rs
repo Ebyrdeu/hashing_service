@@ -3,12 +3,12 @@ use rand::Rng;
 use sha2::{Sha256, Sha512};
 use tide::{Body, Request, Response};
 
-use hashing::dto::{HashedPassword, IsEqual, ManualSalt};
-use hashing::hashing::{compare_hash, with_salt};
+use crate::dto::{AutoSalt, HashedPassword, HashedPasswordWithSalt, IsEqual, ManualSalt};
+use crate::hash_salt_impl::{compare_hash, with_salt};
 
-use crate::hashing::dto::{AutoSalt, HashedPasswordWithSalt};
-
-mod hashing;
+mod hasher;
+mod hash_salt_impl;
+mod dto;
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
@@ -118,6 +118,7 @@ async fn sha512_auto_salt(mut req: Request<()>) -> tide::Result {
         .content_type(tide::http::mime::JSON)
         .build())
 }
+
 async fn sha512_compare(mut req: Request<()>) -> tide::Result {
     let hashed_password = req.param("hashed-password")?;
     let hashed_password = hashed_password.to_string();
