@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables for the application
-ARG PORT=8888
+ARG PORT=8810
 ARG ADDRESS=0.0.0.0
 ENV PORT=${PORT}
 ENV ADDRESS=${ADDRESS}
