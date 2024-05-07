@@ -1,20 +1,19 @@
-use rand::distributions::Alphanumeric;
-use rand::Rng;
-use sha2::{Sha256, Sha512};
-use tide::{Body, Request, Response};
+use tide::log;
 
-use crate::dto::{AutoSalt, HashedPassword, HashedPasswordWithSalt, IsEqual, ManualSalt};
-use crate::hash_salt_impl::{compare_hash, with_salt};
+use crate::resource::sha256::{sha256_auto_salt, sha256_compare, sha256_manual_salt};
+use crate::resource::sha512::{sha512_auto_salt, sha512_compare, sha512_manual_salt};
 
-mod hasher;
-mod hash_salt_impl;
-mod dto;
+mod resource;
+mod domain;
+mod hash;
+mod utils;
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     let address = std::env::var("ADDRESS").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = std::env::var("PORT").expect("PORT is required");
 
+    log::start();
     let mut app = tide::new();
 
     app.at("/sha256/method/manual").post(sha256_manual_salt);
@@ -29,110 +28,4 @@ async fn main() -> tide::Result<()> {
     Ok(())
 }
 
-async fn sha256_manual_salt(mut req: Request<()>) -> tide::Result {
-    let ManualSalt {
-        password,
-        rounds,
-        salt,
-    } = req.body_json().await?;
-    let hashed_password = with_salt::<Sha256>(password, rounds, salt).await;
 
-    Ok(Response::builder(201)
-        .body(Body::from_json(&HashedPassword {
-            password: hashed_password,
-        })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}
-
-async fn sha256_auto_salt(mut req: Request<()>) -> tide::Result {
-    let AutoSalt { password, rounds } = req.body_json().await?;
-
-    let salt = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(16)
-        .map(char::from)
-        .collect::<String>();
-
-    let hashed_password = with_salt::<Sha256>(password, rounds, salt.clone()).await;
-
-    Ok(Response::builder(201)
-        .body(Body::from_json(&HashedPasswordWithSalt {
-            password: hashed_password,
-            salt,
-        })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}
-
-async fn sha256_compare(mut req: Request<()>) -> tide::Result {
-    let hashed_password = req.param("hashed-password")?;
-    let hashed_password = hashed_password.to_string();
-
-    let ManualSalt {
-        password,
-        rounds,
-        salt,
-    } = req.body_json().await?;
-
-    let is_equal = compare_hash::<Sha256>(password, hashed_password, rounds, salt).await;
-
-    Ok(Response::builder(201)
-        .body(Body::from_json(&IsEqual { is_equal })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}
-
-async fn sha512_manual_salt(mut req: Request<()>) -> tide::Result {
-    let ManualSalt {
-        password,
-        rounds,
-        salt,
-    } = req.body_json().await?;
-    let hashed_password = with_salt::<Sha512>(password, rounds, salt).await;
-
-    Ok(Response::builder(201)
-        .body(Body::from_json(&HashedPassword {
-            password: hashed_password,
-        })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}
-
-async fn sha512_auto_salt(mut req: Request<()>) -> tide::Result {
-    let AutoSalt { password, rounds } = req.body_json().await?;
-
-    let salt = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(16)
-        .map(char::from)
-        .collect::<String>();
-
-    let hashed_password = with_salt::<Sha512>(password, rounds, salt.clone()).await;
-
-    Ok(Response::builder(201)
-        .body(Body::from_json(&HashedPasswordWithSalt {
-            password: hashed_password,
-            salt,
-        })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}
-
-async fn sha512_compare(mut req: Request<()>) -> tide::Result {
-    let hashed_password = req.param("hashed-password")?;
-    let hashed_password = hashed_password.to_string();
-
-    let ManualSalt {
-        password,
-        rounds,
-        salt,
-    } = req.body_json().await?;
-
-    let is_equal = compare_hash::<Sha512>(password, hashed_password, rounds, salt).await;
-
-    Ok(Response::builder(201)
-        .body(Body::from_json(&IsEqual { is_equal })?)
-        .content_type(tide::http::mime::JSON)
-        .build())
-}

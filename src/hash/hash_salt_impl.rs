@@ -1,4 +1,4 @@
-use crate::hasher::Hasher;
+use crate::hash::hasher::Hasher;
 
 pub async fn with_salt<D: Hasher + Default>(
     password: String,
