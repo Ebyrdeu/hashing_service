@@ -1,8 +1,8 @@
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 
-struct Salt {
-    chars: usize,
+pub struct Salt {
+   pub chars: usize,
 }
 
 impl Default for Salt {
