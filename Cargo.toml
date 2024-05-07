@@ -13,4 +13,10 @@ serde = { version = "1.0", features = ["derive"] }
 
 # Back
 tide = "0.16"
-async-std = { version = "1.10", features = ["attributes"] }
+tokio = { version = "1.37.0", features = ["full"] }
+
+# Telemetry
+opentelemetry = { version = "0.22.0", features = ["default"] }
+opentelemetry-semantic-conventions = { version = "0.14.0" }
+opentelemetry_sdk = { version = "*", features = ["rt-async-std", "rt-tokio"] }
+opentelemetry-otlp = { version = "*", features = ["grpc-tonic"] }
